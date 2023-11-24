@@ -30,18 +30,20 @@ class FindTableCorners:
         ])
         B = np.array([[rho1], [rho2]])
 
-        intersection = np.linalg.solve(A, B)
-        #x, y = int(intersection[0]), int(intersection[1])
-        x, y = map(int, intersection.flatten()[:2])
+        if np.linalg.matrix_rank(A) >= 2: # Check if the matrix is not singular
+          intersection = np.linalg.solve(A, B)
+          #x, y = int(intersection[0]), int(intersection[1])
+          x, y = map(int, intersection.flatten()[:2])
 
-        if 0 <= x < imgWidth and 0 <= y < imgHeight:
-          corners.append((x, y))
+          if 0 <= x < imgWidth and 0 <= y < imgHeight:
+            corners.append((x, y))
         
     cwCorners = self.ClockwiseCornersPosition(corners)
     return cwCorners
 
 
   ################################################################ To be tested ################################################################
+  # Maybe not necessary
   def ClockwiseCornersPosition(self, corners):
     if len(corners) < 4:
         return corners
@@ -59,6 +61,30 @@ class FindTableCorners:
     sortedCorners = pts[sortedIndices]
 
     return sortedCorners
+  
+
+  # If the lines are too close one to the other
+  def filterCloseLines(lines, minDistance):
+    filteredLines = []
+
+    for line in lines:
+      rho, theta = line[0]
+      addLine = True
+
+      # Check against existing lines in filteredLines
+      for filteredLine in filteredLines:
+        rhoFiltered, thetaFiltered = filteredLine[0]
+
+        # If the lines are very close in parameter space, skip adding this line
+        if abs(rho - rhoFiltered) < minDistance and abs(theta - thetaFiltered) < np.pi / 180 * minDistance:
+          addLine = False
+          break
+
+      if addLine:
+        filteredLines.append(line)
+
+    return filteredLines
+
 
 
   def Run(self):
